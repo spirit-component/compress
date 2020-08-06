@@ -71,7 +71,13 @@ func (p *Compress) CompressByZSTD(session mail.Session) (err error) {
 
 	body := session.Payload().Content().GetBody()
 
-	encoder, _ := zstd.NewWriter(nil)
+	encoder, err := zstd.NewWriter(nil)
+	if err != nil {
+		return
+	}
+
+	defer encoder.Close()
+
 	encoded := encoder.EncodeAll(body, nil)
 
 	logrus.WithField("body_size", len(body)).
@@ -86,7 +92,13 @@ func (p *Compress) DecompressByZSTD(session mail.Session) (err error) {
 
 	body := session.Payload().Content().GetBody()
 
-	decoder, _ := zstd.NewReader(nil)
+	decoder, err := zstd.NewReader(nil)
+	if err != nil {
+		return
+	}
+
+	defer decoder.Close()
+
 	decoded, err := decoder.DecodeAll(body, nil)
 	if err != nil {
 		err = ErrDecompressFailure.New().WithContext("error", err)
